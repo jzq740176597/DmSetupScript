@@ -5,18 +5,22 @@
 ;    - .zip support in extractarchive is 7.x only
 ;    - SetupArchitecture directive is 7.x only
 ;
-;  SAVE THIS FILE AS UTF-8 *WITH* BOM — [Code] contains Chinese literals.
+;  ENCODING: save as UTF-8 (no BOM). [Code] contains Chinese literals and
+;  ISCC auto-detects UTF-8 — do not re-save as GBK/ANSI.
 ;
-;  Release build:   "C:\Program Files\Inno Setup 7\ISCC.exe" dmServerSuite.iss
-;  Fast test build: ISCC /DFAST dmServerSuite.iss          (no compression)
-;  Version bump:    ISCC /DAppVersion=1.0.1 dmServerSuite.iss
+;  Release build:   "C:\Program Files\Inno Setup 7\ISCC.exe" DmServerSuite.iss
+;  Fast test build: ISCC /DFAST DmServerSuite.iss          (no compression)
+;  Version bump:    ISCC /DAppVersion=1.0.1 DmServerSuite.iss
+;
+;  Silent install:  Setup.exe /VERYSILENT /NORESTART /SUPPRESSMSGBOXES \
+;                     /COMPONENTS="core,arthrophx,spinephx" /LOG="%TEMP%\dm.log"
 ; ============================================================================
 
 ; ---------------------------------------------------------------- identity --
 #define AppName        "数医服务程序"
 #define AppNameEn      "DM Server Suite"
 #ifndef AppVersion
-  #define AppVersion   "1.0.0"
+  #define AppVersion   "1.1.0"
 #endif
 #define Publisher      "数医科技"
 
@@ -25,28 +29,34 @@
 #define SrcSlave       "F:\Github\DmServers\build\windows\x64\release"
 #define ZipOmmo        "G:\uPub\ommo_eval_sdk_v0.21.0.zip"
 #define ZipNav         "G:\uPub\dmNavEngineXYW_release_FROM_Fujian.zip"
-#define ZipPhysics     "G:\uPub\dmPhysicsServerRelease-Wanli_Phx.zip"
+#define ZipArthroPhx   "G:\uPub\dmPhysicsServerRelease-Arthro_Phx.zip"
+#define ZipSpinePhx    "G:\uPub\Spline_Phx_FROM_Fujian.zip"
 
-#define ZipOmmoName    ExtractFileName(ZipOmmo)
-#define ZipNavName     ExtractFileName(ZipNav)
-#define ZipPhysName    ExtractFileName(ZipPhysics)
+#define ZipOmmoName        ExtractFileName(ZipOmmo)
+#define ZipNavName         ExtractFileName(ZipNav)
+#define ZipArthroPhxName   ExtractFileName(ZipArthroPhx)
+#define ZipSpinePhxName    ExtractFileName(ZipSpinePhx)
 
 ; ------------------------------------ top-level folders created under {app} --
 ;  These must match the real folder names the archives unpack into.
-#define DirPhysics     "dmPhysicsServerRelease"
+;  NOTE: DirSpinePhx is spelled "Spline_Phx" in the archive, not "Spine_Phx".
+#define DirArthroPhx   "dmPhysicsServerRelease"
+#define DirSpinePhx    "Spline_Phx"
 #define DirNav         "dmNavEngineXYW_release"
 #define DirOmmo        "ommo_eval_sdk_v0.21.0"
 #define DirSlave       "Slave"
 
 ; ------------------------------------ exe paths relative to {app}, '/' style --
-;  NOTE: the ommo zip carries a top wrapper folder of the same name as the
-;  SDK folder inside it, hence DirOmmo appearing twice. Confirmed on disk.
-#define ExePhysics     DirPhysics + "/dmPhysicsServer-fracture.exe"
-#define ExeNavSrv      DirNav     + "/dmSimNaviServer.exe"
-#define ExeNavView     DirNav     + "/dmSimNaviViewer.exe"
-#define ExeOmmo        DirOmmo + "/ommo_service/ommo_service_v0.21.0.exe"
-#define ExeSlaveSrv    DirSlave   + "/dmSlaveDeviceNextServerWithoutLog.exe"
-#define ExeSlaveView   DirSlave   + "/dmSlaveDeviceNextViewer.exe"
+#define ExeArthroPhx   DirArthroPhx + "/dmPhysicsServer-fracture.exe"
+#define ExeSpinePhx    DirSpinePhx  + "/Physics-r.exe"
+#define ExeNavSrv      DirNav       + "/dmSimNaviServer.exe"
+#define ExeNavView     DirNav       + "/dmSimNaviViewer.exe"
+#define ExeOmmo        DirOmmo      + "/ommo_service/ommo_service_v0.21.0.exe"
+#define ExeSlaveSrv    DirSlave     + "/dmSlaveDeviceNextServerWithoutLog.exe"
+#define ExeSlaveView   DirSlave     + "/dmSlaveDeviceNextViewer.exe"
+;jzq
+#define ExeRelPoseSrv  DirSlave     + "/dmRelativePoseServerWithoutLog.exe"
+#define ExeRelPoseView DirSlave     + "/dmRelativePoseViewer.exe"
 
 [Setup]
 AppId={{3F7A9C41-5E82-4B06-A1D3-9C4E7B205F68}
@@ -63,7 +73,7 @@ PrivilegesRequired=admin
 WizardStyle=modern
 DisableProgramGroupPage=yes
 
-; ASCII suffix so the entry is findable in Programs and Features
+; ASCII name so the entry is findable in Programs and Features
 UninstallDisplayName=DmServerSuite
 UninstallDisplayIcon={app}\dmServerHub.exe
 
@@ -81,6 +91,9 @@ RestartApplications=no
 ShowLanguageDialog=no
 LanguageDetectionMethod=none
 
+;That stops the components page from pre-ticking last time's selection
+UsePreviousSetupType=no
+
 #ifdef FAST
 Compression=none
 #else
@@ -94,12 +107,25 @@ SolidCompression=yes
 Name: "cn"; MessagesFile: "compiler:Languages\ChineseSimplified.isl"
 Name: "en"; MessagesFile: "compiler:Default.isl"
 
+[Types]
+Name: "full";   Description: "完整安装（全部物理引擎）"
+Name: "custom"; Description: "自定义"; Flags: iscustom
+
+[Components]
+Name: "core";      Description: "核心程序（Hub / 导航 / ommo / 下位机）"; \
+    Types: full custom; Flags: fixed
+Name: "arthrophx"; Description: "关节物理 ArthroPhx"; Types: full
+Name: "spinephx";  Description: "脊柱物理 SpinePhx";  Types: full
+
 [InstallDelete]
 ; Runs BEFORE [Files]. Clears the previous install so a replace is clean.
 ; Deliberately NOT wiping {app} wholesale — that would delete unins000.exe
 ; mid-install and orphan the Programs-and-Features entry.
+; Physics folders are cleared unconditionally: deselecting an engine on
+; reinstall must remove it, not leave an orphan the config no longer names.
 Type: filesandordirs; Name: "{app}\{#DirSlave}"
-Type: filesandordirs; Name: "{app}\{#DirPhysics}"
+Type: filesandordirs; Name: "{app}\{#DirArthroPhx}"
+Type: filesandordirs; Name: "{app}\{#DirSpinePhx}"
 Type: filesandordirs; Name: "{app}\{#DirNav}"
 Type: filesandordirs; Name: "{app}\{#DirOmmo}"
 Type: files;          Name: "{app}\settings.ini"
@@ -107,16 +133,16 @@ Type: files;          Name: "{app}\*.exe"
 Type: files;          Name: "{app}\*.dll"
 
 [Files]
-; --- step 2: dmServerHub release -> MainDir ---
+; --- dmServerHub release -> MainDir ---
 ; settings.ini is never copied; it is generated in [Code] on every install.
 Source: "{#SrcHub}\*"; DestDir: "{app}"; Excludes: "settings.ini"; \
     Flags: ignoreversion recursesubdirs createallsubdirs
 
-; --- step 3: DmServers release -> MainDir\Slave ---
+; --- DmServers release -> MainDir\Slave ---
 Source: "{#SrcSlave}\*"; DestDir: "{app}\{#DirSlave}"; \
     Flags: ignoreversion recursesubdirs createallsubdirs
 
-; --- steps 4-6: carry each zip to {tmp}, then extract it from there ---
+; --- archives: carry each zip to {tmp}, then extract it from there ---
 ; extractarchive requires an `external` source, so it cannot read a file
 ; compiled into setup; the carrier entry puts it on disk first. [Files]
 ; processes in listed order, so each extract finds its zip already present.
@@ -130,10 +156,17 @@ Source: "{#ZipNav}"; DestDir: "{tmp}"; \
 Source: "{tmp}\{#ZipNavName}"; DestDir: "{app}"; \
     Flags: external extractarchive ignoreversion recursesubdirs createallsubdirs
 
-Source: "{#ZipPhysics}"; DestDir: "{tmp}"; \
-    Flags: deleteafterinstall
-Source: "{tmp}\{#ZipPhysName}"; DestDir: "{app}"; \
-    Flags: external extractarchive ignoreversion recursesubdirs createallsubdirs
+Source: "{#ZipArthroPhx}"; DestDir: "{tmp}"; \
+    Flags: deleteafterinstall; Components: arthrophx
+Source: "{tmp}\{#ZipArthroPhxName}"; DestDir: "{app}"; \
+    Flags: external extractarchive ignoreversion recursesubdirs createallsubdirs; \
+    Components: arthrophx
+
+Source: "{#ZipSpinePhx}"; DestDir: "{tmp}"; \
+    Flags: deleteafterinstall; Components: spinephx
+Source: "{tmp}\{#ZipSpinePhxName}"; DestDir: "{app}"; \
+    Flags: external extractarchive ignoreversion recursesubdirs createallsubdirs; \
+    Components: spinephx
 
 [Icons]
 Name: "{group}\{#AppName}"; Filename: "{app}\dmServerHub.exe"
@@ -154,19 +187,21 @@ Filename: "{app}\{#DirOmmo}\VC_redist.x64_14.40.33816.0.exe"; \
     Parameters: "/install /quiet /norestart"; \
     StatusMsg: "正在安装 VC++ 运行库..."; \
     Flags: waituntilterminated; Check: NeedsVCRedist
-    
+
 Filename: "{app}\dmServerHub.exe"; Description: "{cm:LaunchProgram,{#AppName}}"; \
     Flags: nowait postinstall skipifsilent
 
 [UninstallDelete]
 Type: filesandordirs; Name: "{app}\{#DirSlave}"
-Type: filesandordirs; Name: "{app}\{#DirPhysics}"
+Type: filesandordirs; Name: "{app}\{#DirArthroPhx}"
+Type: filesandordirs; Name: "{app}\{#DirSpinePhx}"
 Type: filesandordirs; Name: "{app}\{#DirNav}"
 Type: filesandordirs; Name: "{app}\{#DirOmmo}"
 Type: files;          Name: "{app}\settings.ini"
 Type: dirifempty;     Name: "{app}"
 
 [Code]
+
 function NeedsVCRedist: Boolean;
 var
   Installed: Cardinal;
@@ -175,6 +210,7 @@ begin
     'SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x64', 'Installed', Installed)
     and (Installed = 1));
 end;
+
 { ===========================================================================
   PART 1 — running-process detection and shutdown
 
@@ -183,17 +219,23 @@ end;
   is running leaves locked files behind as orphans.
   =========================================================================== }
 
-{ Process image names to check. Keep in sync with the Exe* defines above. }
+{ Process image names to check. Keep in sync with the Exe* defines above.
+  Checked unconditionally — an engine not being installed this time does not
+  mean a previously-installed copy is not currently running. }
 function GuardedProcesses: TArrayOfString;
 begin
-  SetArrayLength(Result, 7);
+  SetArrayLength(Result, 10);
   Result[0] := 'dmServerHub.exe';
   Result[1] := 'dmPhysicsServer-fracture.exe';
-  Result[2] := 'dmSimNaviServer.exe';
-  Result[3] := 'dmSimNaviViewer.exe';
-  Result[4] := 'ommo_service_v0.21.0.exe';
-  Result[5] := 'dmSlaveDeviceNextServerWithoutLog.exe';
-  Result[6] := 'dmSlaveDeviceNextViewer.exe';
+  Result[2] := 'Physics-r.exe';
+  Result[3] := 'dmSimNaviServer.exe';
+  Result[4] := 'dmSimNaviViewer.exe';
+  Result[5] := 'ommo_service_v0.21.0.exe';
+  Result[6] := 'dmSlaveDeviceNextServerWithoutLog.exe';
+  Result[7] := 'dmSlaveDeviceNextViewer.exe';
+  //
+  Result[8] := 'dmRelativePoseServerWithoutLog.exe';
+  Result[9] := 'dmRelativePoseViewer.exe';
 end;
 
 { Query WMI for a running image name. Returns False on any COM failure so a
@@ -290,11 +332,16 @@ end;
 
   The file is regenerated unconditionally on every install. The shipped
   profile is authoritative; on-site edits are not preserved.
+
+  Server entries are numbered by SrvIdx as they are emitted, so deselecting
+  a physics engine renumbers the rest with no gaps. dependsOnServerName is a
+  name reference, not an index, so it survives renumbering.
   =========================================================================== }
 
 var
   Buf: TArrayOfString;
   BufCount: Integer;
+  SrvIdx: Integer;
 
 function MainDirFwd: String;
 begin
@@ -318,19 +365,21 @@ begin
   BufCount := BufCount + 1;
 end;
 
-{ Emit one ServerInfos block. Pass '' for fields that must stay empty. }
-procedure AddServer(Index: Integer; const AName, ASrvApp, ASrvArgs,
+{ Emit one ServerInfos block at the next free index.
+  Pass '' for fields that must stay empty. }
+procedure AddServer(const AName, ASrvApp, ASrvArgs,
   AViewApp, AViewArgs, ADepends: String);
 var
   P: String;
 begin
-  P := '1\ServerInfos\' + IntToStr(Index) + '\';
+  P := '1\ServerInfos\' + IntToStr(SrvIdx) + '\';
   Add(P + 'serverName=' + AName);
   Add(P + 'serverApp=' + ASrvApp);
   Add(P + 'serverAppArguments=' + ASrvArgs);
   Add(P + 'viewerApp=' + AViewApp);
   Add(P + 'viewerAppArguments=' + AViewArgs);
   Add(P + 'dependsOnServerName=' + ADepends);
+  SrvIdx := SrvIdx + 1;
 end;
 
 procedure GenerateSettingsIni;
@@ -352,28 +401,43 @@ begin
 
   Add('[Profiles]');
   Add('1\name=Default');
+  SrvIdx := 1;
 
-  AddServer(1, '物理',
-    D + '/{#ExePhysics}',
-    '"-window=0"', '', '', '');
+  if IsComponentSelected('arthrophx') then
+    AddServer('关节物理',
+      D + '/{#ExeArthroPhx}',
+      '"-window=0"', '', '', '');
 
-  AddServer(2, '导航',
+  if IsComponentSelected('spinephx') then
+  begin
+    AddServer('脊柱物理',
+      D + '/{#ExeSpinePhx}',
+      '"-window=1"', '', '', '');
+    //
+    AddServer('套管环锯',
+      D + '/{#ExeRelPoseSrv}',
+      '',
+      D + '/{#ExeRelPoseView}',
+      '', '');
+  end;
+  
+  AddServer('导航',
     D + '/{#ExeNavSrv}',
     '-fCONFIG-OMMO-MagPETD',
     D + '/{#ExeNavView}',
     '', 'ommo');
 
-  AddServer(3, 'ommo',
+  AddServer('ommo',
     D + '/{#ExeOmmo}',
     '', '', '', '');
 
-  AddServer(4, '下位机',
+  AddServer('下位机',
     D + '/{#ExeSlaveSrv}',
     '',
     D + '/{#ExeSlaveView}',
     '', '');
 
-  Add('1\ServerInfos\size=4');
+  Add('1\ServerInfos\size=' + IntToStr(SrvIdx - 1));
   Add('size=1');
   Add('');
 
@@ -397,19 +461,12 @@ end;
 { ===========================================================================
   PART 3 — post-install verification
 
-  Every path written above is checked on disk. A missing exe means one of the
-  Exe* defines no longer matches what the archive unpacks into.
-  =========================================================================== }
-
-{ ===========================================================================
-  PART 3 — post-install verification
-
   Every path written into settings.ini is checked on disk. A missing exe
   means one of the Exe* defines no longer matches what the archive unpacks
   into.
 
-  Root/Missing are globals because Inno's Pascal Script has no nested
-  procedures.
+  VerifyRoot/VerifyMissing are globals because Inno's Pascal Script has no
+  nested procedures.
   =========================================================================== }
 
 var
@@ -435,7 +492,16 @@ begin
   VerifyMissing := '';
 
   Probe('dmServerHub.exe');
-  Probe('{#ExePhysics}');
+  if IsComponentSelected('arthrophx') then
+    Probe('{#ExeArthroPhx}');
+  if IsComponentSelected('spinephx') then
+  begin
+    Probe('{#ExeSpinePhx}');
+    //
+    Probe('{#ExeRelPoseSrv}');
+    Probe('{#ExeRelPoseView}');
+  end;
+  
   Probe('{#ExeNavSrv}');
   Probe('{#ExeNavView}');
   Probe('{#ExeOmmo}');
@@ -465,6 +531,18 @@ function InitializeSetup: Boolean;
 var
   Path, Ver: String;
 begin
+  { Suppress Inno's NoUninstallWarning. It claims deselected components are
+    not uninstalled, which is wrong here: [InstallDelete] clears every engine
+    folder unconditionally and settings.ini is regenerated from scratch, so a
+    deselected engine really is gone. Clearing the stored component list is
+    what stops the comparison. }
+  RegDeleteValue(HKLM,
+    'SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{#SetupSetting("AppId")}_is1',
+    'Inno Setup: Selected Components');
+  RegDeleteValue(HKLM64,
+    'SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{#SetupSetting("AppId")}_is1',
+    'Inno Setup: Selected Components');
+
   Result := EnsureProcessesClosed('安装');
   if not Result then
     Exit;
@@ -474,7 +552,7 @@ begin
     Result := MsgBox(
       '检测到已安装版本 ' + Ver + '：' + #13#10 +
       '    ' + Path + #13#10 + #13#10 +
-      '继续将覆盖安装：目录下的服务程序会被清空重装，' + #13#10 +
+      '继续将覆盖安装：目录下的服务程序（含未勾选的物理引擎）会被清空重装，' + #13#10 +
       'settings.ini 将被重新生成（现有配置不保留）。' + #13#10 + #13#10 +
       '是否继续？',
       mbConfirmation, MB_YESNO) = IDYES;
