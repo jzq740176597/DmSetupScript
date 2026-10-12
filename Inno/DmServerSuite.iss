@@ -20,7 +20,7 @@
 #define AppName        "数医服务程序"
 #define AppNameEn      "DM Server Suite"
 #ifndef AppVersion
-  #define AppVersion   "1.1.0"
+  #define AppVersion   "1.2.0"
 #endif
 #define Publisher      "数医科技"
 
@@ -28,9 +28,10 @@
 #define SrcHub         "F:\Github\DmServerHub\build\windows\x64\release"
 #define SrcSlave       "F:\Github\DmServers\build\windows\x64\release"
 #define ZipOmmo        "G:\uPub\ommo_eval_sdk_v0.21.0.zip"
-#define ZipNav         "G:\uPub\dmNavEngineXYW_release_FROM_Fujian.zip"
+#define ZipNav         "G:\uPub\626dmNavEngineXYW_release.zip" ;dmNavEngineXYW_release_FROM_Fujian.zip"
 #define ZipArthroPhx   "G:\uPub\dmPhysicsServerRelease-Arthro_Phx.zip"
 #define ZipSpinePhx    "G:\uPub\Spline_Phx_FROM_Fujian.zip"
+#define SrcDeps        "G:\uPub\DependDlls" ;jzq
 
 #define ZipOmmoName        ExtractFileName(ZipOmmo)
 #define ZipNavName         ExtractFileName(ZipNav)
@@ -42,9 +43,9 @@
 ;  NOTE: DirSpinePhx is spelled "Spline_Phx" in the archive, not "Spine_Phx".
 #define DirArthroPhx   "dmPhysicsServerRelease"
 #define DirSpinePhx    "Spline_Phx"
-#define DirNav         "dmNavEngineXYW_release"
-#define DirOmmo        "ommo_eval_sdk_v0.21.0"
-#define DirSlave       "Slave"
+#define DirNav         RemoveFileExt(ZipNavName)    ;"dmNavEngineXYW_release"
+#define DirOmmo        RemoveFileExt(ZipOmmoName)   ;"ommo_eval_sdk_v0.21.0"
+#define DirSlave       "" ;"Slave" : put in dmHub rootDir as slave-exe ACQUIRE QtDll & platforms [10-12-2026]
 
 ; ------------------------------------ exe paths relative to {app}, '/' style --
 #define ExeArthroPhx   DirArthroPhx + "/dmPhysicsServer-fracture.exe"
@@ -133,6 +134,9 @@ Type: files;          Name: "{app}\*.exe"
 Type: files;          Name: "{app}\*.dll"
 
 [Files]
+; --- system dependencies -> Windows\System32 (skip if file exists) --- jzq
+Source: "{#SrcDeps}\*.dll"; DestDir: "{sys}"; Flags: onlyifdoesntexist uninsneveruninstall sharedfile
+
 ; --- dmServerHub release -> MainDir ---
 ; settings.ini is never copied; it is generated in [Code] on every install.
 Source: "{#SrcHub}\*"; DestDir: "{app}"; Excludes: "settings.ini"; \
@@ -423,7 +427,7 @@ begin
   
   AddServer('导航',
     D + '/{#ExeNavSrv}',
-    '-fCONFIG-OMMO-MagPETD',
+    '-fCONFIG-OMMO',
     D + '/{#ExeNavView}',
     '', 'ommo');
 
