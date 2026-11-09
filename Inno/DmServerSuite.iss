@@ -20,7 +20,7 @@
 #define AppName        "数医服务程序"
 #define AppNameEn      "DM Server Suite"
 #ifndef AppVersion
-  #define AppVersion   "1.2.0"
+  #define AppVersion   "1.2.1"
 #endif
 #define Publisher      "数医科技"
 
@@ -65,7 +65,8 @@ AppName={#AppName}
 AppVersion={#AppVersion}
 AppVerName={#AppName} {#AppVersion}
 AppPublisher={#Publisher}
-DefaultDirName={autopf}\DmServer
+DefaultDirName=D:\Program Files\DmServer
+UsePreviousAppDir=no
 DefaultGroupName={#AppName}
 OutputBaseFilename=DmServerSuite_Setup_{#AppVersion}_x64
 OutputDir=.\Output
@@ -529,6 +530,19 @@ begin
   Result := RegQueryStringValue(HKLM, 'SOFTWARE\DmServer', 'InstallPath', Path);
   if Result then
     RegQueryStringValue(HKLM, 'SOFTWARE\DmServer', 'Version', Ver);
+end;
+
+function NextButtonClick(CurPageID: Integer): Boolean;
+begin
+  Result := True;
+  if CurPageID = wpSelectDir then
+  begin
+    if Uppercase(Copy(Trim(WizardDirValue), 1, 3)) = 'C:\' then
+    begin
+      MsgBox('Can''t be install under C:\, select other disk', mbError, MB_OK);
+      Result := False;
+    end;
+  end;
 end;
 
 function InitializeSetup: Boolean;
