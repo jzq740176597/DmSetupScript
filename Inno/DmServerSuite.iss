@@ -20,7 +20,7 @@
 #define AppName        "数医服务程序"
 #define AppNameEn      "DM Server Suite"
 #ifndef AppVersion
-  #define AppVersion   "1.3.0"
+  #define AppVersion   "1.3.1"
 #endif
 #define Publisher      "数医科技"
 
@@ -53,10 +53,10 @@
 #define ExeNavSrv      DirNav       + "/dmSimNaviServer.exe"
 #define ExeNavView     DirNav       + "/dmSimNaviViewer.exe"
 #define ExeOmmo        DirOmmo      + "/ommo_service/ommo_service_v0.21.0.exe"
-#define ExeSlaveSrv    DirSlave     + "/dmSlaveDeviceNextServerWithoutLog.exe"
+#define ExeSlaveSrv    DirSlave     + "/dmSlaveDeviceNextServer.exe"
 #define ExeSlaveView   DirSlave     + "/dmSlaveDeviceNextViewer.exe"
 ;jzq
-#define ExeRelPoseSrv  DirSlave     + "/dmRelativePoseServerWithoutLog.exe"
+#define ExeRelPoseSrv  DirSlave     + "/dmRelativePoseServer.exe"
 #define ExeRelPoseView DirSlave     + "/dmRelativePoseViewer.exe"
 
 [Setup]
@@ -251,10 +251,10 @@ begin
   Result[3] := 'dmSimNaviServer.exe';
   Result[4] := 'dmSimNaviViewer.exe';
   Result[5] := 'ommo_service_v0.21.0.exe';
-  Result[6] := 'dmSlaveDeviceNextServerWithoutLog.exe';
+  Result[6] := 'dmSlaveDeviceNextServer.exe';
   Result[7] := 'dmSlaveDeviceNextViewer.exe';
   //
-  Result[8] := 'dmRelativePoseServerWithoutLog.exe';
+  Result[8] := 'dmRelativePoseServer.exe';
   Result[9] := 'dmRelativePoseViewer.exe';
 end;
 
