@@ -20,7 +20,7 @@
 #define AppName        "数医服务程序"
 #define AppNameEn      "DM Server Suite"
 #ifndef AppVersion
-  #define AppVersion   "1.2.1"
+  #define AppVersion   "1.3.0"
 #endif
 #define Publisher      "数医科技"
 
@@ -74,6 +74,9 @@ SetupArchitecture=x64
 PrivilegesRequired=admin
 WizardStyle=modern
 DisableProgramGroupPage=yes
+
+; *Uncomment To* Show the welcome page ("This will install ... {#AppVersion}")
+;DisableWelcomePage=no
 
 ; ASCII name so the entry is findable in Programs and Features
 UninstallDisplayName=DmServerSuite
@@ -181,6 +184,11 @@ Name: "{autodesktop}\{#AppName}"; Filename: "{app}\dmServerHub.exe"; Tasks: desk
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"
 
+[INI]
+; Version marker left in the install folder (readable by the Hub app / ops scripts)
+Filename: "{app}\version.ini"; Section: "DmServerSuite"; Key: "Version"; String: "{#AppVersion}"
+Filename: "{app}\version.ini"; Section: "DmServerSuite"; Key: "BuildDate"; String: "{#GetDateTimeString('yyyy-mm-dd', '-', ':')}"
+
 [Registry]
 Root: HKLM; Subkey: "SOFTWARE\DmServer"; ValueType: string; \
     ValueName: "InstallPath"; ValueData: "{app}"; Flags: uninsdeletekey
@@ -203,9 +211,16 @@ Type: filesandordirs; Name: "{app}\{#DirSpinePhx}"
 Type: filesandordirs; Name: "{app}\{#DirNav}"
 Type: filesandordirs; Name: "{app}\{#DirOmmo}"
 Type: files;          Name: "{app}\settings.ini"
+Type: files;          Name: "{app}\version.ini"
 Type: dirifempty;     Name: "{app}"
 
 [Code]
+
+procedure InitializeWizard;
+begin
+  { show the version on every wizard page }
+  WizardForm.Caption := '{#AppName} {#AppVersion} Setup';
+end;
 
 function NeedsVCRedist: Boolean;
 var
@@ -568,7 +583,7 @@ begin
   if GetPrevInstall(Path, Ver) and DirExists(Path) then
   begin
     Result := MsgBox(
-      '检测到已安装版本 ' + Ver + '：' + #13#10 +
+      '检测到已安装版本 ' + Ver + '，将升级/覆盖为 {#AppVersion}：' + #13#10 +
       '    ' + Path + #13#10 + #13#10 +
       '继续将覆盖安装：目录下的服务程序（含未勾选的物理引擎）会被清空重装，' + #13#10 +
       'settings.ini 将被重新生成（现有配置不保留）。' + #13#10 + #13#10 +
